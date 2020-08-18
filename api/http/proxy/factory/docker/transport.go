@@ -433,10 +433,8 @@ func (transport *Transport) restrictedResourceOperation(request *http.Request, r
 			return nil, err
 		}
 
-		log.Printf("[DEBUG] [resourceID: %s] [resourceType: %d]", resourceID, resourceType)
 		resourceControl := authorization.GetResourceControlByResourceIDAndType(resourceID, resourceType, resourceControls)
 		if resourceControl == nil {
-			log.Printf("[DEBUG] resource control is nil")
 			agentTargetHeader := request.Header.Get(portainer.PortainerAgentTargetHeader)
 
 			// This resource was created outside of portainer,
@@ -450,7 +448,6 @@ func (transport *Transport) restrictedResourceOperation(request *http.Request, r
 				return responseutils.WriteAccessDeniedResponse()
 			}
 		}
-		log.Printf("[DEBUG] resource control %+v", resourceControl)
 
 		if resourceControl != nil && !authorization.UserCanAccessResource(tokenData.ID, userTeamIDs, resourceControl) {
 			return responseutils.WriteAccessDeniedResponse()
