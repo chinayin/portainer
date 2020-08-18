@@ -1,7 +1,6 @@
 package docker
 
 import (
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
