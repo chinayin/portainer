@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -156,8 +157,13 @@ func (transport *Transport) proxyAgentRequest(r *http.Request) (*http.Response, 
 			return transport.administratorOperation(r)
 		}
 
+		volumeResourceID, err := transport.getVolumeResourceID(volumeIDParameter[0])
+		if err != nil {
+			return nil, err
+		}
+
 		// volume browser request
-		return transport.restrictedResourceOperation(r, volumeIDParameter[0], portainer.VolumeResourceControl, true)
+		return transport.restrictedResourceOperation(r, volumeResourceID, portainer.VolumeResourceControl, true)
 	}
 
 	return transport.executeDockerRequest(r)
@@ -427,8 +433,10 @@ func (transport *Transport) restrictedResourceOperation(request *http.Request, r
 			return nil, err
 		}
 
+		log.Printf("[DEBUG] [resourceID: %s] [resourceType: %d]", resourceID, resourceType)
 		resourceControl := authorization.GetResourceControlByResourceIDAndType(resourceID, resourceType, resourceControls)
 		if resourceControl == nil {
+			log.Printf("[DEBUG] resource control is nil")
 			agentTargetHeader := request.Header.Get(portainer.PortainerAgentTargetHeader)
 
 			// This resource was created outside of portainer,
@@ -442,6 +450,7 @@ func (transport *Transport) restrictedResourceOperation(request *http.Request, r
 				return responseutils.WriteAccessDeniedResponse()
 			}
 		}
+		log.Printf("[DEBUG] resource control %+v", resourceControl)
 
 		if resourceControl != nil && !authorization.UserCanAccessResource(tokenData.ID, userTeamIDs, resourceControl) {
 			return responseutils.WriteAccessDeniedResponse()

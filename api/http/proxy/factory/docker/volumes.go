@@ -168,16 +168,23 @@ func (transport *Transport) restrictedVolumeOperation(requestPath string, reques
 		return transport.rewriteOperation(request, transport.volumeInspectOperation)
 	}
 
-	cli := transport.dockerClient
-	volume, err := cli.VolumeInspect(context.Background(), path.Base(requestPath))
+	volumeID, err := transport.getVolumeResourceID(path.Base(requestPath))
 	if err != nil {
 		return nil, err
 	}
-
-	volumeID := volume.Name + volume.CreatedAt
 
 	if request.Method == http.MethodDelete {
 		return transport.executeGenericResourceDeletionOperation(request, volumeID, portainer.VolumeResourceControl)
 	}
 	return transport.restrictedResourceOperation(request, volumeID, portainer.VolumeResourceControl, false)
+}
+
+func (transport *Transport) getVolumeResourceID(volumeID string) (string, error) {
+	cli := transport.dockerClient
+	volume, err := cli.VolumeInspect(context.Background(), volumeID)
+	if err != nil {
+		return "", err
+	}
+
+	return volume.Name + volume.CreatedAt, nil
 }
